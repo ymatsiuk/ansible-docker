@@ -1,0 +1,11 @@
+{
+ "Availability": "{{ docker_node_action | default('active') }}",
+ "Name": "{{ inventory_hostname }}",
+ "Role": "{{ item.Spec.Role }}",
+ "Labels": {
+   {% if 'docker-swarm-cassandra' in group_names %}
+   "role.type": "services",
+   "role.service": "cassandra"
+   {% endif %}
+   }
+}

@@ -1,0 +1,5 @@
+{
+  "ListenAddr": "{{ swarm_listen }}:2377",
+  "AdvertiseAddr": "{{ swarm_bootstrap_ip }}:2377",
+  "ForceNewCluster": false,
+}

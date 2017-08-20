@@ -1,0 +1,62 @@
+---
+
+- name: Check if upgrade needed
+  shell: apt list --upgradable "{{ docker_pkg_name }}" 2>&1|grep $(lsb_release -cs)|awk '{print $2}'
+  register: docker_upgrade_needed_check
+
+- name: Get upgrade version
+  set_fact:
+    docker_upgrade_version: "{{ docker_upgrade_needed_check.stdout }}"
+  when: docker_upgrade_needed_check.stdout is defined
+
+- name: Setting docker_upgrade_needed fact
+  set_fact:
+    docker_upgrade_needed: "{{ docker_upgrade_needed_check.rc == 0 and docker_upgrade_needed_check.stdout != '' }}"
+
+- name: Prepare to drain node
+  uri:
+    url: http://127.0.0.1:2375/nodes?filters={"id":{"{{ docker_info_facts.Swarm.NodeID }}":true}}
+  register: node
+  delegate_to: "{{ groups['docker-swarm-managers'][0] }}"
+- set_fact:
+    docker_node_facts: "{{ node.json }}"
+    docker_node_action: "drain"
+- name: Drain
+  uri:
+    url: http://127.0.0.1:2375/nodes/{{ item.ID }}/update?version={{ item.Version.Index }}
+    body: "{{ lookup('template', 'templates/node.json') }}"
+    body_format: json
+    method: POST
+  when: item.Spec.Availability == 'active' and docker_upgrade_needed
+  with_items: "{{ docker_node_facts }}"
+  delegate_to: "{{ groups['docker-swarm-managers'][0] }}"
+
+- name: Upgrade docker
+  include_role:
+    name: docker
+    tasks_from: install
+  when: docker_upgrade_needed
+
+- name: Prepare to activate node
+  uri:
+    url: http://127.0.0.1:2375/nodes?filters={"id":{"{{ docker_info_facts.Swarm.NodeID }}":true}}
+  register: node
+  delegate_to: "{{ groups['docker-swarm-managers'][0] }}"
+- set_fact:
+    docker_node_facts: "{{ node.json }}"
+    docker_node_action: "active"
+
+- name: Activate
+  uri:
+    url: http://127.0.0.1:2375/nodes/{{ item.ID }}/update?version={{ item.Version.Index }}
+    body: "{{ lookup('template', 'templates/node.json') }}"
+    body_format: json
+    method: POST
+  when: item.Spec.Availability == 'drain' and docker_upgrade_needed
+  with_items: "{{ docker_node_facts }}"
+  delegate_to: "{{ groups['docker-swarm-managers'][0] }}"
+
+- name: Waiting for containers to re-balance after drain
+  pause:
+    seconds: 30
+  when: docker_upgrade_needed

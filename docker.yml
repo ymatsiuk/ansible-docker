@@ -1,0 +1,44 @@
+# to test, run:
+#   ansible-playbook -i vagrant-swarm -b -K -D docker.yml
+---
+
+- hosts: all
+  gather_facts: no
+  tasks:
+    - name: If missing, install Python
+      raw: test -e /usr/bin/python || (apt update -yqq && apt install -yqq python)
+
+- hosts: all
+  gather_facts: yes
+  tasks:
+    - name: Ensure req packages installed 
+      package: pkg=acl
+      package: pkg=gnupg-curl
+    - name: set timezone variables
+      timezone:
+        name: Etc/UTC
+    - name: restart rsyslog
+      service: name=rsyslog state=restarted
+    - name: set locale variables
+      locale_gen:
+        name: en_US.UTF-8
+        state: present
+      when: ansible_os_family == "Debian"
+
+
+
+
+- name: Install docker
+  hosts: docker-swarm
+  gather_facts: True
+  roles:
+    - docker
+
+- name: Upgrade docker
+  serial: 1
+  hosts: docker-swarm
+  tasks:
+    - name: Upgrade
+      include_role:
+        name: docker
+        tasks_from: upgrade

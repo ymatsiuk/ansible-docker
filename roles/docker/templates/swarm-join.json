@@ -1,0 +1,13 @@
+{
+  "ListenAddr": "{{ swarm_listen }}:2377",
+  "AdvertiseAddr": "{{ swarm_advertise }}:2377",
+  "RemoteAddrs":
+    [
+        "{{ swarm_bootstrap_ip }}:2377"
+    ],
+    "JoinToken": {% if 'docker-swarm-managers' in group_names %}
+    "{{ docker_swarm_facts.JoinTokens.Manager }}"
+    {% else %}
+    "{{ docker_swarm_facts.JoinTokens.Worker }}"
+    {% endif %}
+}
