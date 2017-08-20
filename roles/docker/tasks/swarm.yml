@@ -1,0 +1,29 @@
+---
+
+- name: Swarm init
+  uri:
+    url: http://127.0.0.1:2375/swarm/init
+    body: "{{ lookup('template', 'templates/swarm-init.json') }}"
+    body_format: json
+    method: POST
+  delegate_to: "{{ groups['docker-swarm-managers'][0] }}"
+  run_once: true
+
+- name: Getting swarm facts
+  uri:
+    url: http://127.0.0.1:2375/swarm
+  register: swarm
+  delegate_to: "{{ groups['docker-swarm-managers'][0] }}"
+  run_once: true
+- set_fact:
+    docker_swarm_facts: "{{ swarm.json }}"
+
+- name: Join swarm
+  uri:
+    url: http://127.0.0.1:2375/swarm/join
+    body: "{{ lookup('template', 'templates/swarm-join.json') }}"
+    body_format: json
+    method: POST
+  when: inventory_hostname not in groups['docker-swarm-managers'][0]
+
+...

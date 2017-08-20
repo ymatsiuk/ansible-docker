@@ -1,0 +1,25 @@
+# Development hosts for swarm test
+
+[all:vars]
+env=dev
+dc=vagrant
+ansible_user=vagrant
+ansible_become=yes
+ansible_ssh_extra_args="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+ansible_ssh_private_key_file="~/.vagrant.d/insecure_private_key"
+
+[docker-swarm-managers]
+docker-master-01.test ansible_host=192.168.100.211 vagrant_memory=256
+docker-master-02.test ansible_host=192.168.100.212 vagrant_memory=256
+
+[docker-swarm-workers]
+docker-worker-01.test ansible_host=192.168.101.201 vagrant_memory=256
+docker-worker-02.test ansible_host=192.168.101.202 vagrant_memory=256
+
+[docker-swarm-cassandra]
+docker-cassandra-01.test ansible_host=192.168.102.201 vagrant_memory=256
+
+[docker-swarm:children]
+docker-swarm-managers
+docker-swarm-workers
+docker-swarm-cassandra
