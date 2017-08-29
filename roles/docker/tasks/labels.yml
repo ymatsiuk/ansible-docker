@@ -6,7 +6,7 @@
     body: "{{ lookup('template', 'templates/node.json') }}"
     body_format: json
     method: POST
-  when: item.Swarm.LocalNodeState == 'active'
+  when: item.Spec.Availability == 'active'
   with_items: "{{ docker_swarm_node_facts }}"
   delegate_to: "{{ groups['docker-swarm-managers'][0] }}"
 
