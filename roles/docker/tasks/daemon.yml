@@ -1,0 +1,7 @@
+---
+
+- name: Ensure our docker daemon configured
+  template:
+    src=templates/daemon.json
+    dest=/etc/docker/daemon.json
+

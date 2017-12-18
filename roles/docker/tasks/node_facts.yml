@@ -1,0 +1,10 @@
+---
+
+- name: Set node info facts
+  uri:
+    url: http://127.0.0.1:2375/info
+  register: info
+- set_fact:
+    docker_info_facts: "{{ info.json }}"
+
+...

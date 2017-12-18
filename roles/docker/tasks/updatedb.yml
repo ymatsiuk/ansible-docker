@@ -1,0 +1,16 @@
+---
+
+- name: Check if updatedb.conf exists
+  stat:
+    path: /etc/updatedb.conf
+  register: updatedb_conf_exists
+
+- name: Ensure updatedb does not index {{ docker_mounts.docker_dir.mount }}
+  lineinfile:
+    dest: /etc/updatedb.conf
+    state: present
+    backrefs: yes
+    regexp: '^PRUNEPATHS="({{ docker_mounts.docker_dir.mount }} )?(.*)"$'
+    line: 'PRUNEPATHS="{{ docker_mounts.docker_dir.mount }} \2"'
+  when: updatedb_conf_exists.stat.exists
+

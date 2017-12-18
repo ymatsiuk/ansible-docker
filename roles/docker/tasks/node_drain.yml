@@ -1,0 +1,20 @@
+---
+
+- name: Prepare to drain node
+  uri:
+    url: http://127.0.0.1:2375/nodes?filters={"id":{"{{ docker_info_facts.Swarm.NodeID }}":true}}
+  register: node
+  delegate_to: "{{ groups['docker-swarm-managers'][0] }}"
+- set_fact:
+    docker_node_facts: "{{ node.json }}"
+    docker_node_action: "drain"
+
+- name: Drain
+  uri:
+    url: http://127.0.0.1:2375/nodes/{{ item.ID }}/update?version={{ item.Version.Index }}
+    body: "{{ lookup('template', 'templates/node.json') }}"
+    body_format: json
+    method: POST
+  when: item.Spec.Availability == 'active' and docker_upgrade_needed
+  with_items: "{{ docker_node_facts }}"
+  delegate_to: "{{ groups['docker-swarm-managers'][0] }}"

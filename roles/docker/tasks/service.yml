@@ -1,0 +1,18 @@
+---
+
+- name: Check if docker.service file exists
+  stat:
+    path: /lib/systemd/system/docker.service
+  register: docker_service_exists
+
+- name: Add socket activation to service file [https://github.com/moby/moby/issues/25471]
+  lineinfile:
+    dest: /lib/systemd/system/docker.service
+    state: present
+    backrefs: yes
+    regexp: '^(ExecStart=/usr/bin/dockerd -H fd://)(.*)?$'
+    line: '\1 -H tcp://{{ docker_api_ip }}:2375'
+  when: docker_service_exists.stat.exists
+  notify: Restart docker
+
+- meta: flush_handlers

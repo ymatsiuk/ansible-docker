@@ -1,0 +1,12 @@
+---
+
+- name: Check if docker installed
+  shell: dpkg-query -s "{{ docker_pkg_name }}" 2>&1
+  ignore_errors: true
+  register: docker_installed_check
+
+- name: Setting docker_install_needed
+  set_fact:
+    docker_install_needed: "{{ docker_installed_check.failed is defined }}"
+
+...

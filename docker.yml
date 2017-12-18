@@ -38,7 +38,12 @@
   serial: 1
   hosts: docker-swarm
   tasks:
+    - name: Check if upgraded
+      include_role:
+        name: docker
+        tasks_from: check_upgrade
     - name: Upgrade
       include_role:
         name: docker
         tasks_from: upgrade
+      when: docker_upgrade_needed and not docker_upgrade_done
