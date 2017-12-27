@@ -11,7 +11,7 @@
 - hosts: all
   gather_facts: yes
   tasks:
-    - name: Ensure req packages installed 
+    - name: Ensure req packages installed
       package: pkg=acl
       package: pkg=gnupg-curl
     - name: set timezone variables
@@ -30,9 +30,34 @@
 
 - name: Install docker
   hosts: docker-swarm
-  gather_facts: True
-  roles:
-    - docker
+  #gather_facts: True
+  tasks:
+    - name: Check if docker installed
+      include_role:
+        name: docker
+        tasks_from: check_install
+    - name: Install docker
+      include_role:
+        name: docker
+        tasks_from: install
+      when: docker_install_needed
+
+- name: Swarm
+  hosts: docker-swarm
+  tasks:
+    - name: Set swarm facts
+      include_role:
+        name: docker
+        tasks_from: node_facts
+    - name: Intitialize swarm
+      include_role:
+        name: docker
+        tasks_from: swarm
+      when: docker_info_facts.Swarm.LocalNodeState == 'inactive'
+    - name: Set swarm facts
+      include_role:
+        name: docker
+        tasks_from: node_facts
 
 - name: Upgrade docker
   serial: 1

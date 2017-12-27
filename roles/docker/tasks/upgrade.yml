@@ -1,53 +1,40 @@
 ---
 
-- name: Check if docker upgraded
-  include_role:
-    name: docker
-    tasks_from: check_upgrade
-
 - name: Docker repo configuration
   include_role:
     name: docker
     tasks_from: repo
-  when: not docker_upgraded
 
 - name: Drain node
   include_role:
     name: docker
     tasks_from: node_drain
-  when: not docker_upgraded
 
 - name: Upgrade docker to "{{ docker_upgrade_version }}"
   apt:
     name: "{{ docker_pkg_name }}={{ docker_upgrade_version }}"
     update_cache: yes
-  when: not docker_upgraded
 
 - name: UpdateDB configuration
   include_role:
     name: docker
     tasks_from: updatedb
-  when: not docker_upgraded
 
 - name: Daemon configuration
   include_role:
     name: docker                  
     tasks_from: daemon
-  when: not docker_upgraded
 
 - name: Service configuration
   include_role:
     name: docker                  
     tasks_from: service
-  when: not docker_upgraded
 
 - name: Activate node
   include_role:
     name: docker
     tasks_from: node_activate
-  when: not docker_upgraded
 
 - name: Waiting for containers to re-balance after drain
   pause:
     seconds: 30
-  when: not docker_upgraded

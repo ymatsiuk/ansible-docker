@@ -5,14 +5,6 @@
   ignore_errors: true
   register: docker_installed_version
 
-- debug:
-    var: docker_installed_version
-
 - name: 
   set_fact:
-    docker_upgrade_done: False | default(True)|bool
-  when: docker_installed_version != docker_upgrade_version
-
-- debug:
-    var: docker_upgrade_done 
-...
+    docker_upgrade_done: "{% if docker_installed_version.stdout_lines | join(' ') == docker_upgrade_version %}True{% else %}False{% endif %}"
